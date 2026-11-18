@@ -1,0 +1,14 @@
+Regime,Type,Top10_Overlap,Shift
+W = 4 (Lower dismissal weight),Batter,9/10,"Hridoy #4->#6, Abhishek #5->#4"
+W = 8 (Higher dismissal weight),Batter,9/10,"Hridoy rises to #3, Tim David falls to #8"
+Dynamic W (Match situation dependent),Batter,10/10,9/10 stay in top 10; jacks marginal
+Opponent Quality (Batter & Bowler Elo),Both,9/10,Shaheen #4->#3; Sooryavanshi stays #1
+Aggregation Weight: w = n (Linear balls),Batter,7/10,"Daryl Mitchell enters, Russell exits"
+Chase-Only (Innings 2 Calibrated WP),Batter,7/10,"Shreyas Iyer #1, Karthik #4, David #5"
+IPL-Only (Franchise League Subset),Batter,4/10,"Sooryavanshi, Iyer, Abhishek, David dominate"
+Pressure Cutoff 85th Percentile (Extreme),Both,8/10,Top tier stable; small-sample fringe fluctuates
+Pressure Cutoff 75th Percentile (Broader),Both,9/10,Higher overlap; ratings smooth out
+High Sample Floor (>=150 balls),Batter,4/10,"Excludes 6 players (<150b): Vaibhav Sooryavanshi, Kusal Perera, Towhid Hridoy, Dinesh Karthik, Saim Ayub, Andre Russell"
+Pure Run Suppression (0% Wkt Weight),Bowler,7/10,"Hazlewood falls to #11; Mahedi, Shaheen, Krunal top 3"
+Tandem Rollover Enabled (Sensitivity),Bowler,10/10,Bumrah rises #15->#11; top 8 unchanged
+Beta Ranked (Pressure vs Usual Level Delta),Batter,5/10,Isolates players whose output surges under pressure

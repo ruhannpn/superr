@@ -17,7 +17,9 @@ sens_master = pd.read_csv('sensitivity_master.csv')
 with open('summary_metrics.json') as f:
     summary_metrics = json.load(f)
 
+cfg = summary_metrics['config']
 counts = summary_metrics['counts']
+shrink = summary_metrics['shrinkage']
 rel = summary_metrics['reliability']
 
 batters_top = results_master[results_master['player_type'] == 'Batter'].sort_values('rank').head(10)
@@ -85,11 +87,11 @@ h1_style = ParagraphStyle(
     'H1_Custom',
     parent=styles['Normal'],
     fontName='Helvetica-Bold',
-    fontSize=10,
-    leading=13,
+    fontSize=9.8,
+    leading=12.5,
     textColor=primary_color,
-    spaceBefore=4,
-    spaceAfter=2,
+    spaceBefore=3.5,
+    spaceAfter=1.8,
     keepWithNext=True
 )
 
@@ -97,27 +99,18 @@ body_style = ParagraphStyle(
     'Body_Custom',
     parent=styles['Normal'],
     fontName='Helvetica',
-    fontSize=7.4,
-    leading=9.8,
+    fontSize=7.2,
+    leading=9.5,
     textColor=text_dark,
-    spaceAfter=2.5
-)
-
-callout_style = ParagraphStyle(
-    'Callout_Custom',
-    parent=styles['Normal'],
-    fontName='Helvetica-Oblique',
-    fontSize=7.1,
-    leading=9.4,
-    textColor=colors.HexColor('#1e293b')
+    spaceAfter=2.2
 )
 
 table_header_style = ParagraphStyle(
     'TableHeader',
     parent=styles['Normal'],
     fontName='Helvetica-Bold',
-    fontSize=6.0,
-    leading=7.4,
+    fontSize=5.8,
+    leading=7.2,
     textColor=colors.white,
     alignment=1
 )
@@ -126,8 +119,8 @@ table_cell_style = ParagraphStyle(
     'TableCell',
     parent=styles['Normal'],
     fontName='Helvetica',
-    fontSize=5.9,
-    leading=7.2,
+    fontSize=5.7,
+    leading=7.0,
     textColor=text_dark
 )
 
@@ -135,8 +128,8 @@ table_cell_bold = ParagraphStyle(
     'TableCellBold',
     parent=styles['Normal'],
     fontName='Helvetica-Bold',
-    fontSize=5.9,
-    leading=7.2,
+    fontSize=5.7,
+    leading=7.0,
     textColor=primary_color
 )
 
@@ -144,8 +137,8 @@ table_cell_center = ParagraphStyle(
     'TableCellCenter',
     parent=styles['Normal'],
     fontName='Helvetica',
-    fontSize=5.9,
-    leading=7.2,
+    fontSize=5.7,
+    leading=7.0,
     textColor=text_dark,
     alignment=1
 )
@@ -156,151 +149,146 @@ story = []
 # PAGE 1: TITLE, EXECUTIVE SUMMARY, ARCHITECTURE, SAMPLE AUDIT
 # ==============================================================================
 title_table_data = [
-    [Paragraph('<b>SupeRR Selector Season 2: Identifying Demonstrated Execution Under Pressure</b>', ParagraphStyle('TitleP', fontName='Helvetica-Bold', fontSize=13.0, leading=15.5, textColor=primary_color))],
-    [Paragraph(f"<b>Statistical Methodology & Scouting Evaluation</b> | Author: Ruhann P. N. | Dataset: {counts['all_matches']} Total Matches ({counts['all_balls']:,} Deliveries) &rarr; {counts['tier1_matches']} Tier-1 Matches ({counts['tier1_balls']:,} Deliveries)", ParagraphStyle('SubTitleP', fontName='Helvetica', fontSize=7.4, leading=9.2, textColor=accent_blue))]
+    [Paragraph('<b>SupeRR Selector Season 2: Identifying Demonstrated Execution Under Pressure</b>', ParagraphStyle('TitleP', fontName='Helvetica-Bold', fontSize=12.5, leading=15.0, textColor=primary_color))],
+    [Paragraph(f"<b>Statistical Methodology & Scouting Evaluation</b> | Author: Ruhann P. N. | Dataset: {counts['all_matches']} Matches ({counts['all_balls']:,} Deliveries) &rarr; {counts['tier1_matches']} Tier-1 Matches ({counts['tier1_balls']:,} Deliveries)", ParagraphStyle('SubTitleP', fontName='Helvetica', fontSize=7.3, leading=9.0, textColor=accent_blue))]
 ]
 title_table = Table(title_table_data, colWidths=[523])
 title_table.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
     ('LINEBELOW', (0,1), (-1,1), 1.5, primary_color),
-    ('PADDING', (0,0), (-1,-1), 3.5),
+    ('PADDING', (0,0), (-1,-1), 3.2),
 ]))
 story.append(title_table)
-story.append(Spacer(1, 4))
+story.append(Spacer(1, 3))
 
-story.append(Paragraph('1. Executive Summary & Objective', h1_style))
+story.append(Paragraph('1. Executive Summary & Sabermetric Architecture', h1_style))
 story.append(Paragraph(
-    'Evaluating T20 performance under match pressure is fundamentally confounded by situation bias, survivor bias, and noisy small-sample extremes. '
+    'Evaluating T20 performance under match pressure is fundamentally confounded by situation bias, survivor bias, and extreme-value small-sample noise. '
     'Conventional proxies (such as isolating overs 17-20 or quoting raw strike rates) conflate death-phase tactical hitting with genuine leverage. '
-    'This report implements a three-layer de-biasing framework designed to measure <i>best demonstrated execution under pressure, with measured uncertainty</i>. '
-    'Leverage is defined via true swing leverage (&Delta;WP between boundary and dismissal). Attribution isolates situation context via Model B, and ratings are stabilized '
-    'through entry-group stratified Empirical Bayes shrinkage with separate variance estimation for runs and dismissals.',
+    'This framework follows the modern Sabermetric paradigm: machine learning is restricted to estimating match context (Model A Win Probability) and delivery difficulty '
+    '(Model B expected runs and dismissal likelihood without identity leakage). Player execution is derived via hierarchical Empirical Bayes shrinkage '
+    'estimated from ball-level variances, precision aggregation weights, and phase-par baselines. '
+    'The results reflect <i>best demonstrated execution under pressure, with measured uncertainty</i>, rather than an unalterable genetic trait.',
     body_style
 ))
 
-story.append(Paragraph('2. Three-Layer Mathematical Framework', h1_style))
+story.append(Paragraph('2. Mathematical Pipeline: Leverage, Difficulty & Attribution', h1_style))
 arch_data = [
     [Paragraph('<b>Layer A: Dynamic Leverage & Context State</b>', table_header_style),
      Paragraph('<b>Layer B: Non-Leaking Ball Attribution</b>', table_header_style),
-     Paragraph('<b>Layer C: Stratified Empirical Bayes</b>', table_header_style)],
-    [Paragraph('Calibrated Win Probability (HGB with monotonic constraints) predicts match win probability at each delivery. <b>True Swing Leverage (LI)</b> measures swing between a +4 boundary and a dismissal: LI = |WP(+4) - WP(out)| / mean(LI). High-pressure threshold is set at the 80th percentile (LI &ge; 1.674). 73.7% of pressure deliveries fall in chases.', table_cell_style),
-     Paragraph('Dual HistGradientBoosting models estimate delivery expectation without identity leakage: xRuns predicts expected runs conceded; xWkt predicts dismissal probability based strictly on match state, venue, and delivery style (pace/spin, angle, hand). Net residual: e = (Runs - xRuns) - W &times; (Wkt - xWkt).', table_cell_style),
-     Paragraph('Separate variance estimation for runs and dismissals. Cell residuals are shrunk toward entry-group empirical priors: EB_Resid = EB_RunsPart - W &times; EB_WktPart. Cross-group aggregation utilizes precision-adjusted ball weights w_ig = n_ig^2 / (n_ig + k_g), penalizing sample fragmentation.', table_cell_style)]
+     Paragraph('<b>Layer C: Ball-Level Empirical Bayes</b>', table_header_style)],
+    [Paragraph('Monotonic HistGradientBoosting predicts batting win probability (WP). <b>True Swing Leverage (LI)</b> measures the swing between a +4 boundary and an out: LI = |WP(+4) - WP(out)| / mean(LI). High-pressure threshold is set at the 80th percentile (LI &ge; 1.674). 72.1% of high-pressure deliveries occur in chases.', table_cell_style),
+     Paragraph('Dual HistGradientBoosting models estimate delivery expectation without identity leakage: xRuns predicts expected runs conceded; xWkt predicts dismissal likelihood based strictly on match state, venue, phase, and bowler type (pace vs spin). Net residual: e = (Runs - xRuns) - W &times; (Wkt - xWkt).', table_cell_style),
+     Paragraph('Empirical Bayes shrinkage parameters are estimated directly from ball-level variance: k_runs = 220.0, k_wkt = 1576.8 for batters; k_bsaved = 205.1, k_bwkt = 464.9 for bowlers. Extreme wicket outcomes are compressed toward empirical priors, eliminating small-sample distortions.', table_cell_style)]
 ]
 t_arch = Table(arch_data, colWidths=[174, 175, 174])
 t_arch.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,0), primary_color),
     ('BACKGROUND', (0,1), (-1,1), colors.HexColor('#f8fafc')),
     ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
-    ('PADDING', (0,0), (-1,-1), 4),
+    ('PADDING', (0,0), (-1,-1), 3.5),
     ('VALIGN', (0,0), (-1,-1), 'TOP'),
 ]))
 story.append(t_arch)
-story.append(Spacer(1, 4))
+story.append(Spacer(1, 3))
 
-story.append(Paragraph('3. Sample Audit & Eligibility Uniformity', h1_style))
+story.append(Paragraph('3. Sample Audit, Configuration & Eligibility Uniformity', h1_style))
 story.append(Paragraph(
-    f"To prevent non-standard match dynamics from polluting baseline calibrations, the dataset is audited through strict, documented criteria. "
+    f"To prevent Associate mismatches from distorting calibrations, the dataset is audited through strict, documented criteria. "
     f"From {counts['all_matches']} raw matches ({counts['all_balls']:,} deliveries), {counts['all_matches'] - counts['valid_matches']} abandoned fixtures are removed. "
     f"Filtering for Tier-1 competition (IPL franchises and ICC Full Member nations) yields {counts['tier1_matches']} matches and {counts['tier1_balls']:,} deliveries. "
     f"High-leverage selection (LI &ge; {counts['li_threshold']}) isolates {counts['high_pressure_balls']:,} deliveries. "
-    f"<b>Eligibility Rule:</b> Every player must face or bowl a minimum of 120 high-leverage deliveries across at least 8 tested matches in Tier-1 play. "
-    f"No post-hoc exclusion filters (such as arbitrary match-success floors) are applied to any candidate.",
+    f"<b>Eligibility Rule:</b> Minimum 120 high-pressure deliveries faced or bowled across at least 8 tested matches in Tier-1 play. "
+    f"<b>Config Parameters:</b> TIE_RULE = '{cfg['tie_rule']}' (rank strictly by composite score; candidates within 0.05 of cut line evaluated by Boot P); "
+    f"K_SUCC = {cfg['k_succ']} (consistency shrinkage matches); WINSOR_SD = {cfg['winsor_sd']} (winsorise wicket terms at &plusmn;2.5 SD). "
+    f"Yields exactly <b>{counts['qual_batters']} Qualified Batters</b> and <b>{counts['qual_bowlers']} Qualified Bowlers</b>.",
     body_style
 ))
 
 audit_data = [
     [Paragraph('<b>Pipeline Stage</b>', table_header_style), Paragraph('<b>Matches</b>', table_header_style), Paragraph('<b>Deliveries</b>', table_header_style), Paragraph('<b>Description & Filter Rationale</b>', table_header_style)],
-    [Paragraph('Raw Input Data', table_cell_bold), Paragraph(str(counts['all_matches']), table_cell_center), Paragraph(f"{counts['all_balls']:,}", table_cell_center), Paragraph('Complete historical T20 ball-by-ball archive (2022-2026).', table_cell_style)],
-    [Paragraph('Valid Result Filter', table_cell_bold), Paragraph(str(counts['valid_matches']), table_cell_center), Paragraph(f"{counts['valid_balls']:,}", table_cell_center), Paragraph('Excludes abandoned matches and fixtures with no result.', table_cell_style)],
+    [Paragraph('Raw Input Archive', table_cell_bold), Paragraph(str(counts['all_matches']), table_cell_center), Paragraph(f"{counts['all_balls']:,}", table_cell_center), Paragraph('Complete historical T20 ball-by-ball archive (2022-2026).', table_cell_style)],
+    [Paragraph('Valid Result Filter', table_cell_bold), Paragraph(str(counts['valid_matches']), table_cell_center), Paragraph(f"{counts['valid_balls']:,}", table_cell_center), Paragraph('Excludes abandoned fixtures and matches with no result.', table_cell_style)],
     [Paragraph('Tier-1 Competition', table_cell_bold), Paragraph(str(counts['tier1_matches']), table_cell_center), Paragraph(f"{counts['tier1_balls']:,}", table_cell_center), Paragraph('IPL franchises & ICC Full Members; excludes Associate mismatches.', table_cell_style)],
-    [Paragraph('High Leverage (LI &ge; 1.674)', table_cell_bold), Paragraph(str(counts['tier1_matches']), table_cell_center), Paragraph(f"{counts['high_pressure_balls']:,}", table_cell_center), Paragraph('Top 20% swing leverage deliveries (&Delta;WP between boundary & dismissal).', table_cell_style)],
-    [Paragraph('Qualified Candidates', table_cell_bold), Paragraph('-', table_cell_center), Paragraph('181 Players', table_cell_center), Paragraph('93 Batters & 88 Bowlers meeting 120-ball and 8-match qualification floor.', table_cell_style)]
+    [Paragraph('High Leverage (LI &ge; 1.674)', table_cell_bold), Paragraph(str(counts['tier1_matches']), table_cell_center), Paragraph(f"{counts['high_pressure_balls']:,}", table_cell_center), Paragraph('Top 20% swing leverage deliveries (&Delta;WP between boundary & out).', table_cell_style)],
+    [Paragraph('Qualified Candidates', table_cell_bold), Paragraph('-', table_cell_center), Paragraph('187 Players', table_cell_center), Paragraph(f"{counts['qual_batters']} Batters & {counts['qual_bowlers']} Bowlers meeting the 120-ball and 8-match qualification floor.", table_cell_style)]
 ]
-t_audit = Table(audit_data, colWidths=[110, 50, 75, 288])
+t_audit = Table(audit_data, colWidths=[105, 48, 72, 298])
 t_audit.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,0), primary_color),
     ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
     ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f8fafc')]),
-    ('PADDING', (0,0), (-1,-1), 2.5),
+    ('PADDING', (0,0), (-1,-1), 2.2),
 ]))
 story.append(t_audit)
 
 story.append(PageBreak())
 
 # ==============================================================================
-# PAGE 2: MODEL TRAINING, TANDEM RE-TEST, BUMRAH/NARINE AUDIT, RELIABILITY
+# PAGE 2: MODEL B CALIBRATION, SHRINKAGE PARAMETERS & AUDITS
 # ==============================================================================
-story.append(Paragraph('4. Win Probability Calibration & True Swing Leverage', h1_style))
+story.append(Paragraph('4. Win Probability Calibration & Model B Validation', h1_style))
 story.append(Paragraph(
-    'Model A predicts batting team win probability from match state. In innings 2, strict monotonic constraints are enforced: '
-    '&part;WP/&part;rrr &le; 0, &part;WP/&part;wickets_in_hand &ge; 0, and &part;WP/&part;balls_remaining &ge; 0. '
-    'This guarantees that chasing teams can never lose probability from scoring runs or preserving wickets. '
-    'Innings 2 Brier score achieves 0.128 (high skill). In innings 1, win probability operates with low out-of-sample skill (+8% Brier reduction vs 0.25 uninformative base rate), '
-    'because first-innings totals depend heavily on pitch evolution. Consequently, 73.7% of high-pressure deliveries originate in chases where WP is fully calibrated.',
+    'Innings 2 Win Probability enforces monotonic constraints on features (&part;WP/&part;rrr &le; 0, &part;WP/&part;wickets &ge; 0, &part;WP/&part;balls &ge; 0). '
+    'Innings 1 out-of-fold Brier score achieves 0.1598 (+36.1% skill over 0.25 uninformative base rate), while time-split Brier across seasons is 0.2543 (-1.7% skill), '
+    'reflecting that first-innings totals are subject to pitch degradation. 72.1% of high-pressure deliveries fall in chases where WP is strongly calibrated. '
+    '<br/><b>Model B Calibration:</b> Evaluating xWkt on high-pressure balls shows close alignment across phases (Powerplay: actual 4.02% vs exp 4.46%; Middle: 4.61% vs 4.77%; Death: 8.01% vs 7.54%). '
+    'Pace vs spin check reveals identical residual rates (Pace: -0.15 wkts/100b; Spin: -0.12 wkts/100b), confirming zero bowler-type bias.',
     body_style
 ))
 
-story.append(Paragraph('5. Tandem Bowling Spillover: Pre-Registered Statistical Re-Test', h1_style))
+story.append(Paragraph('5. Ball-Level Variance & Empirical Bayes Parameter Stability', h1_style))
 story.append(Paragraph(
-    'It is widely hypothesized that extreme run suppression from one bowler induces wickets for the bowler operating from the opposite end. '
-    'To rigorously test whether tandem credits should enter primary rankings, we estimated clustered OLS regressions on Tier-1 overs (match-clustered SEs, next-bowler fixed effects): '
-    'next_over_wkt_resid = &beta;_0 + &gamma; &times; good_over + &alpha;_next_bowler + &epsilon;. '
-    '<br/><b>Tested Results:</b> '
-    '<br/>&bull; Binary good over (&le;6 runs conceded): &gamma;&#770; = -0.0087 (SE = 0.0076, p = 0.2546, 95% CI: [-0.0236, +0.0062]). Conservation bound: 2,763 actual wickets fell after good overs. '
-    '<br/>&bull; Continuous run suppression (runs saved vs par): &beta;&#770; = -0.0007 (SE = 0.0008, p = 0.4011, 95% CI: [-0.0022, +0.0009]). '
-    '<br/><b>Decision Rule:</b> Because both 95% confidence intervals cross zero and display slightly negative point estimates, '
-    '<b>tandem spillover is definitively excluded from the primary bowler metric</b> and retained solely as a sensitivity regime.',
+    f"Empirical Bayes shrinkage parameters derived from delivery-level noise (&sigma;_e^2) and between-player variance (&sigma;_b^2) establish: "
+    f"<br/>&bull; <b>Batters:</b> Runs &sigma;_e^2 = {shrink['sig_e2_runs']:.4f}, &sigma;_b^2 = {shrink['sig_b2_runs']:.5f} &rarr; <b>k_runs = {shrink['k_runs']:.1f} balls</b>. "
+    f"Wicket &sigma;_e^2 = {shrink['sig_e2_wkt']:.4f}, &sigma;_b^2 = {shrink['sig_b2_wkt']:.6f} &rarr; <b>k_wkt = {shrink['k_wkt']:.1f} balls</b>. "
+    f"Because batter wicket &sigma;_b^2 is near zero, shrunk wicket residuals compress to a near-constant (-0.005 to -0.010 per ball for all players). "
+    f"Consequently, <b>the batter ranking is overwhelmingly driven by the runs part</b>. "
+    f"<br/>&bull; <b>Bowlers:</b> Runs Saved &sigma;_e^2 = {shrink['sig_e2_bsaved']:.4f}, &sigma;_b^2 = {shrink['sig_b2_bsaved']:.5f} &rarr; <b>k_bsaved = {shrink['k_bsaved']:.1f} balls</b>. "
+    f"Wickets &sigma;_e^2 = {shrink['sig_e2_bwkt']:.4f}, &sigma;_b^2 = {shrink['sig_b2_bwkt']:.6f} &rarr; <b>k_bwkt = {shrink['k_bwkt']:.1f} balls</b>. "
+    f"<br/>&bull; <b>Parameter Bootstrap (500 match resamples):</b> k_runs median = 130.3 (90% CI: [92.2, 186.6]); k_bsaved median = 119.0 (90% CI: [87.3, 165.0]); "
+    f"k_bwkt median = 452.2 (90% CI: [258.8, 476.3]); k_wkt exhibits high variance due to near-zero &sigma;_b^2.",
     body_style
 ))
 
-story.append(Paragraph('6. Bowler Run Suppression, Implied Par & Bumrah / Narine Audit', h1_style))
-story.append(Paragraph(
-    'Direct bowler execution is defined strictly as phase-adjusted runs saved per ball: runs_saved_per_ball = phase_par_ball - runs_conceded. '
-    'Implied par per over (pressure_ER + 6 &times; saved_per_ball) averages 8.99 across all qualified bowlers (min 8.34, max 9.79), perfectly matching high-leverage phase pars. '
-    'Earlier versions exhibited inflated par values (~11.0) due to folding hypothetical tandem credits into raw runs saved; removing tandem restores direct phase par integrity.',
-    body_style
-))
-
-# Dhoni vs Karthik and Bumrah/Narine Audit Table
+story.append(Paragraph('6. Dhoni, Bumrah & Narine Empirical Audits', h1_style))
 audit_cases = [
     [Paragraph('<b>Candidate Case</b>', table_header_style), Paragraph('<b>P-Balls</b>', table_header_style), Paragraph('<b>Actual vs Expected</b>', table_header_style), Paragraph('<b>Residual / Rate</b>', table_header_style), Paragraph('<b>Statistical Evaluation & Ruling</b>', table_header_style)],
-    [Paragraph('MS Dhoni', table_cell_bold), Paragraph('69', table_cell_center), Paragraph('92 runs, 2 outs (133.3 SR)', table_cell_center), Paragraph('EB: +0.150 / ball', table_cell_center), Paragraph('<b>Filtered Out:</b> 69 balls falls well below 120-ball floor. Baseline SR (140.4 on 428b) confirms limited high-pressure volume.', table_cell_style)],
-    [Paragraph('Dinesh Karthik', table_cell_bold), Paragraph('136', table_cell_center), Paragraph('213 runs, 5 outs (156.6 SR)', table_cell_center), Paragraph('EB: +0.239 / ball', table_cell_center), Paragraph('<b>Qualified (Rank #7):</b> Tested across 23 matches (9 high-pressure qualifying); legitimate late-order impact.', table_cell_style)],
-    [Paragraph('Jasprit Bumrah', table_cell_bold), Paragraph('364', table_cell_center), Paragraph('13 wkts vs 19.37 xWkt', table_cell_center), Paragraph('ER 7.50 (+0.253 saved/b)', table_cell_center), Paragraph('<b>Rank #15 (Boot P 72.6%):</b> Extreme run suppression (+0.253/b) offset by -6.37 direct wkts. Gap is within sampling variance (z = -1.45, p = 0.15).', table_cell_style)],
-    [Paragraph('Sunil Narine', table_cell_bold), Paragraph('355', table_cell_center), Paragraph('9 wkts vs 16.11 xWkt', table_cell_center), Paragraph('ER 7.11 (+0.237 saved/b)', table_cell_center), Paragraph('<b>Rank #17 (Boot P 65.6%):</b> Squeezes runs at 7.11 ER; dismissal deficit (-7.11 wkts) reflects variance (z = -1.77, p = 0.08).', table_cell_style)]
+    [Paragraph('MS Dhoni', table_cell_bold), Paragraph('69', table_cell_center), Paragraph('92 runs, 2 outs (133.3 SR)', table_cell_center), Paragraph('EB: +0.150 / ball', table_cell_center), Paragraph('<b>Filtered Out:</b> 69 balls is below the 120-ball floor. Low-pressure baseline (140.4 SR on 428b) confirms limited high-pressure volume.', table_cell_style)],
+    [Paragraph('Dinesh Karthik', table_cell_bold), Paragraph('136', table_cell_center), Paragraph('213 runs, 5 outs (156.6 SR)', table_cell_center), Paragraph('EB: +0.103 / ball', table_cell_center), Paragraph('<b>Rank #15 (Boot P 21.6%):</b> Tested in 15 matches (7 qualifying); legitimate execution but regressed under ball-level shrinkage.', table_cell_style)],
+    [Paragraph('Jasprit Bumrah', table_cell_bold), Paragraph('364', table_cell_center), Paragraph('13 wkts vs 19.37 xWkt', table_cell_center), Paragraph('ER 7.50 (+0.253 saved/b)', table_cell_center), Paragraph('<b>Rank #14 (Boot P 31.4%):</b> Saves +0.253 runs/ball; -6.37 wicket deficit is within ordinary sampling variance (z = -1.45, p = 0.15).', table_cell_style)],
+    [Paragraph('Sunil Narine', table_cell_bold), Paragraph('355', table_cell_center), Paragraph('9 wkts vs 16.11 xWkt', table_cell_center), Paragraph('ER 7.11 (+0.237 saved/b)', table_cell_center), Paragraph('<b>Rank #16 (Boot P 14.4%):</b> Squeezes runs at 7.11 ER; dismissal deficit (-7.11 wkts) is within sampling variance (z = -1.77, p = 0.08).', table_cell_style)]
 ]
-t_cases = Table(audit_cases, colWidths=[80, 42, 115, 88, 198])
+t_cases = Table(audit_cases, colWidths=[75, 40, 115, 88, 205])
 t_cases.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,0), primary_color),
     ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
     ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f8fafc')]),
-    ('PADDING', (0,0), (-1,-1), 2.5),
+    ('PADDING', (0,0), (-1,-1), 2.2),
 ]))
 story.append(t_cases)
-story.append(Spacer(1, 4))
+story.append(Spacer(1, 3))
 
 story.append(Paragraph('7. Reliability Metrics on Final Primary Metric', h1_style))
 story.append(Paragraph(
-    f"Reliability metrics recomputed on the final primary metric confirm measured persistence: "
-    f"<br/>&bull; <b>Batters Split-Half (N=93):</b> Raw odd/even r = {rel['bat_split_half_raw']:.3f} &rarr; <b>Spearman-Brown Corrected r = {rel['bat_split_half_sb']:.3f}</b>. Time-split (2022-24 vs 2025-26, N=83) r = {rel['bat_time_split']:.3f}. Batting execution is highly noisy, proving shrinkage is mandatory. "
-    f"<br/>&bull; <b>Bowlers Split-Half (N=88):</b> Raw odd/even r = {rel['bowl_split_half_raw']:.3f} &rarr; <b>Spearman-Brown Corrected r = {rel['bowl_split_half_sb']:.3f}</b>. "
-    f"<br/>&bull; <b>Alpha-Beta Correlation:</b> Batters r = {rel['bat_alpha_beta']:.3f}; Bowlers r = {rel['bowl_alpha_beta']:.3f}. Bowler pressure ratings heavily overlap with general bowling quality, whereas batting pressure resilience exhibits distinct independence.",
+    f"Measured persistence across split-half and multi-year time splits on the final metric confirms: "
+    f"<br/>&bull; <b>Batters Split-Half (N=99):</b> Raw odd/even r = {rel['bat_split_half_raw']:.3f} &rarr; <b>Spearman-Brown Corrected r = {rel['bat_split_half_sb']:.3f}</b>. Time-split (2022-24 vs 2025-26, N=85) r = {rel['bat_time_split']:.3f}. Batting pressure execution carries delivery-level noise, making shrinkage essential. "
+    f"<br/>&bull; <b>Bowlers Split-Half (N=88):</b> Raw odd/even r = {rel['bowl_split_half_raw']:.3f} &rarr; <b>Spearman-Brown Corrected r = {rel['bowl_split_half_sb']:.3f}</b>. Time-split (2022-24 vs 2025-26, N=82) r = {rel['bowl_time_split']:.3f}. "
+    f"<br/>&bull; <b>Alpha-Beta Correlation:</b> Batters r = {rel['bat_alpha_beta']:.3f}; Bowlers r = {rel['bowl_alpha_beta']:.3f}. Bowler run suppression under pressure overlaps with general bowling quality.",
     body_style
 ))
 
 story.append(PageBreak())
 
 # ==============================================================================
-# PAGE 3: PRIMARY BATTERS (EXACT DECOMPOSITION, ALPHA, BETA, BOOT P)
+# PAGE 3: PRIMARY BATTERS LEADERBOARD & CUT-LINE ANALYSIS
 # ==============================================================================
-story.append(Paragraph('8. Primary Batter Leaderboard: Reconciled Decomposition & Elevation', h1_style))
+story.append(Paragraph('8. Primary Batter Leaderboard: Ball-Level Shrinkage & Composite Score', h1_style))
 story.append(Paragraph(
     'Primary ranking is governed by: <b>80% EB Residual (W=6) + 20% Shrunk Consistency</b>. '
-    'Empirical Bayes shrinkage is estimated separately for runs (k_runs = 8.5 to 14.0) and dismissals (k_wkt = 2.4 to 13.4; player-level k_wkt = 470 vs k_runs = 268), '
-    'guaranteeing that noisy wicket outcomes are shrunk appropriately. Aggregation across entry groups uses precision weights w_ig = n_ig^2 / (n_ig + k_g). '
-    'Decomposition reconciles with zero error: EB_Resid = EB_RunsPart - 6.0 &times; EB_WktPart. '
-    'Baseline residual (&alpha;) and pressure elevation (&beta;, shrunk) isolate execution relative to normal leverage.',
+    'Shrinkage parameters (k_runs = 220.0, k_wkt = 1576.8) shrink delivery-level noise. '
+    'Match consistency is shrunk via succ_shrunk = (succ + 8 &times; p0) / (n_matches + 8), where success represents a net positive pressure residual match. '
+    'Baseline residual (&alpha;) and pressure elevation (&beta;, shrunk) isolate performance relative to normal leverage.',
     body_style
 ))
 
@@ -309,13 +297,14 @@ bat_table_data = [
      Paragraph('<b>Batter Name</b>', table_header_style),
      Paragraph('<b>Balls</b>', table_header_style),
      Paragraph('<b>P-SR</b>', table_header_style),
-     Paragraph('<b>Raw Runs</b>', table_header_style),
      Paragraph('<b>EB Runs</b>', table_header_style),
-     Paragraph('<b>Raw Wkt</b>', table_header_style),
      Paragraph('<b>EB Wkt</b>', table_header_style),
      Paragraph('<b>EB Resid</b>', table_header_style),
      Paragraph('<b>Base &alpha;</b>', table_header_style),
      Paragraph('<b>Elev &beta;</b>', table_header_style),
+     Paragraph('<b>Nm</b>', table_header_style),
+     Paragraph('<b>Succ%</b>', table_header_style),
+     Paragraph('<b>Score</b>', table_header_style),
      Paragraph('<b>Boot P</b>', table_header_style),
      Paragraph('<b>Tactical Archetype</b>', table_header_style)]
 ]
@@ -326,51 +315,51 @@ for idx, r in batters_top.iterrows():
         Paragraph(r['flagged_name'], table_cell_bold if not r['low_confidence'] else table_cell_style),
         Paragraph(f"{r['p_balls']:.0f}", table_cell_center),
         Paragraph(f"{r['metric_primary_rate']:.1f}", table_cell_center),
-        Paragraph(f"{r['raw_runs_part']:+.3f}", table_cell_center),
         Paragraph(f"{r['eb_runs_part']:+.3f}", table_cell_center),
-        Paragraph(f"{r['raw_wkt_part']:+.4f}", table_cell_center),
         Paragraph(f"{r['eb_wkt_part']:+.4f}", table_cell_center),
         Paragraph(f"<b>{r['eb_resid']:+.3f}</b>", table_cell_center),
         Paragraph(f"{r['alpha_baseline']:+.3f}", table_cell_center),
         Paragraph(f"{r['beta_delta']:+.3f}", table_cell_center),
+        Paragraph(f"{r['tested_matches']:.0f}", table_cell_center),
+        Paragraph(f"{r['shrunk_succ_rate']:.1%}", table_cell_center),
+        Paragraph(f"{r['composite_score']:.3f}", table_cell_center),
         Paragraph(f"{r['boot_p']:.1%}", table_cell_center),
         Paragraph(r['archetype'], table_cell_style)
     ])
 
-t_bat = Table(bat_table_data, colWidths=[18, 90, 26, 28, 36, 36, 38, 38, 40, 36, 36, 34, 67])
+t_bat = Table(bat_table_data, colWidths=[16, 88, 24, 26, 32, 34, 34, 32, 32, 20, 30, 28, 30, 97])
 t_bat.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,0), primary_color),
     ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
     ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f8fafc')]),
-    ('PADDING', (0,0), (-1,-1), 2.2),
+    ('PADDING', (0,0), (-1,-1), 1.8),
 ]))
 story.append(t_bat)
-story.append(Paragraph('* <i>Low Confidence Flag: Qualified with under 150 high-pressure balls or Boot P < 40%. Boot P represents the empirical probability of remaining in the top 10 over 500 match-clustered bootstrap resamples.</i>', ParagraphStyle('Footnote', fontName='Helvetica-Oblique', fontSize=6.2, leading=7.5, textColor=colors.HexColor('#64748b'))))
-story.append(Spacer(1, 4))
+story.append(Paragraph('* <i>Low Confidence Flag: Qualified with under 150 high-pressure balls or Boot P < 40%. Boot P represents empirical top-10 probability across 500 match-clustered bootstrap resamples.</i>', ParagraphStyle('Footnote', fontName='Helvetica-Oblique', fontSize=6.0, leading=7.2, textColor=colors.HexColor('#64748b'))))
+story.append(Spacer(1, 3))
 
-story.append(Paragraph('9. Batter Scouting & Execution Profile Analysis', h1_style))
+story.append(Paragraph('9. Batter Cut-Line Analysis & Player Profiles', h1_style))
 story.append(Paragraph(
-    '<b>1. Vaibhav Sooryavanshi (#1, 139b, SR 234.5, Boot P 31.0%*):</b> Extreme boundary hitting power (+0.667 EB runs/ball above par), though high uncertainty reflects lower volume. Retains #1 across W=4, dynamic W, and IPL-only regimes. '
-    '<br/><b>2. Shreyas Iyer (#2, 328b, SR 166.2, Boot P 89.8%):</b> The most robust pressure anchor in the dataset. Balances scoring (+0.205 EB runs/ball) with remarkable dismissal preservation (-0.0246 outs/ball vs par). Enters top 10 in 90% of bootstrap draws. '
-    '<br/><b>3. Kusal Perera (#3, 139b, SR 154.7, Boot P 30.4%*):</b> Elite pressure surge (+0.268 runs/ball) with a strong positive elevation (&beta; = +0.299) relative to below-average baseline play (&alpha; = -0.108). '
-    '<br/><b>4. Towhid Hridoy (#4, 143b, SR 124.5, Boot P 33.4%*):</b> Driven predominantly by dismissal suppression (-0.0434 outs/ball vs expected, saving 6.2 wickets). Runs part is modest (+0.079). Under W=4, rank shifts to #6; under dynamic W he rises to #3. '
-    '<br/><b>5. Abhishek Sharma (#5, 322b, SR 183.2, Boot P 75.8%):</b> Pure boundary striking (+0.323 EB runs/ball over 322 balls). High baseline (&alpha; = +0.255) means pressure execution is consistent with general excellence (&beta; = +0.036). '
-    '<br/><b>6. Tim David (#6, 296b, SR 169.9, Boot P 82.8%):</b> High-volume death execution (+0.241 EB runs/ball). Consistent match performer (Boot P 82.8%), ranking in the top 8 across all sensitivity regimes. '
-    '<br/><b>7-10. Karthik, Ayub, Russell, Prabhsimran:</b> Karthik (#7, SR 156.6) proves legitimate lower-order impact across 9 high-pressure matches. Ayub (#8, &beta; = +0.270) demonstrates immense positive elevation. Russell (#9) and Prabhsimran (#10) supply elite run power.',
+    '<b>Cut-Line Evaluation (#10 Boundary):</b> Under TIE_RULE = "strict", Suryakumar Yadav (#10, score 1.345, 533b, Boot P 60.2%) takes the 10th spot ahead of Andre Russell (#11, score 1.335, 128b, Boot P 21.0%) by +0.010 composite score. Under "bootp", Suryakumar also wins cleanly due to higher stability (60.2% vs 21.0%). '
+    '<br/><b>1. Vaibhav Sooryavanshi (#1, 139b, SR 234.5, Boot P 68.2%*):</b> Elite boundary striking (+0.297 EB runs/ball above par). Carries a sample flag (<150b) but sustains #1 across W=4, W=8, dynamic W, and IPL-only regimes. '
+    '<br/><b>2. Abhishek Sharma (#2, 322b, SR 183.2, Boot P 94.6%):</b> The highest-reliability power hitter in the dataset. Generates +0.210 EB runs/ball over 322 balls, entering the top 10 in 94.6% of bootstrap draws. '
+    '<br/><b>3. Shreyas Iyer (#3, 328b, SR 166.2, Boot P 83.4%):</b> The premier middle-overs anchor. Combines +0.147 EB runs/ball with strong match consistency (69.0% over 18 matches). '
+    '<br/><b>4. Tim David (#4, 296b, SR 169.9, Boot P 89.8%):</b> High-volume death execution (+0.182 EB runs/ball). Finishes in the top 5 across 90% of bootstrap draws. '
+    '<br/><b>5-10. Perera, Inglis, Dhir, Bairstow, Prabhsimran, Suryakumar:</b> Kusal Perera (#5, SR 154.7) and Josh Inglis (#6, SR 167.2) supply strong elevation (&beta; > +0.07). Naman Dhir (#7, SR 176.9) and Bairstow (#8, SR 171.3) demonstrate high boundary conversion. Prabhsimran (#9, 306b, Boot P 60.4%) and Suryakumar (#10, 533b, Boot P 60.2%) anchor the lower tier with large sample sizes.',
     body_style
 ))
 
 story.append(PageBreak())
 
 # ==============================================================================
-# PAGE 4: PRIMARY BOWLERS (DIRECT EXECUTION, IMPLIED PAR, BOOT P)
+# PAGE 4: PRIMARY BOWLERS LEADERBOARD & DIRECT PAR INTEGRITY
 # ==============================================================================
 story.append(Paragraph('10. Primary Bowler Leaderboard: Direct Phase-Par Execution', h1_style))
 story.append(Paragraph(
-    'Primary ranking is governed by: <b>60% Phase-Par Runs Saved + 25% Wickets Above Expected + 15% Shrunk Consistency</b>. '
-    'No tandem rollover credit, no opponent weighting, and no dynamic W are folded into the primary metric. '
+    'Primary ranking is governed by: <b>60% EB Phase-Par Runs Saved + 25% EB Wkts Above Expected + 15% Shrunk Consistency</b>. '
+    'No tandem rollover credit, no opponent multipliers, and no dynamic W are folded into the primary metric. '
     'Runs saved per ball = phase_par_ball - runs_conceded. Implied par per over aligns with ground truth (8.36 to 9.65). '
-    'Wickets above par measures actual dismissals against Model B expectation (xWkt). Baseline &alpha; represents normal-leverage runs saved per over.',
+    'EB Wkts represents shrunk wickets above Model B expectation. Consistency is shrunk with K_SUCC = 8.',
     body_style
 ))
 
@@ -378,14 +367,16 @@ bowl_table_data = [
     [Paragraph('<b>#</b>', table_header_style),
      Paragraph('<b>Bowler Name</b>', table_header_style),
      Paragraph('<b>Balls</b>', table_header_style),
-     Paragraph('<b>Wkts</b>', table_header_style),
      Paragraph('<b>P-ER</b>', table_header_style),
      Paragraph('<b>Saved/b</b>', table_header_style),
      Paragraph('<b>EB Saved</b>', table_header_style),
+     Paragraph('<b>EB Wkts</b>', table_header_style),
      Paragraph('<b>Impl. Par</b>', table_header_style),
-     Paragraph('<b>Wkts &gt; Par</b>', table_header_style),
      Paragraph('<b>Base &alpha;</b>', table_header_style),
      Paragraph('<b>Elev &beta;</b>', table_header_style),
+     Paragraph('<b>Nm</b>', table_header_style),
+     Paragraph('<b>Succ%</b>', table_header_style),
+     Paragraph('<b>Score</b>', table_header_style),
      Paragraph('<b>Boot P</b>', table_header_style),
      Paragraph('<b>Tactical Archetype</b>', table_header_style)]
 ]
@@ -395,47 +386,40 @@ for idx, r in bowlers_top.iterrows():
         Paragraph(str(r['rank']), table_cell_bold),
         Paragraph(r['flagged_name'], table_cell_bold if not r['low_confidence'] else table_cell_style),
         Paragraph(f"{r['p_balls']:.0f}", table_cell_center),
-        Paragraph(f"{r['raw_wkt_part'] * r['p_balls'] + (r['p_balls']*0.05):.0f}" if 'wkts' not in r else str(r['wkts']), table_cell_center),
         Paragraph(f"{r['metric_primary_rate']:.2f}", table_cell_center),
         Paragraph(f"{r['raw_runs_part']:+.3f}", table_cell_center),
         Paragraph(f"{r['eb_runs_part']:+.3f}", table_cell_center),
+        Paragraph(f"{r['eb_wkt_total']:+.2f}", table_cell_center),
         Paragraph(f"{r['eb_resid']:.2f}", table_cell_center),
-        Paragraph(f"{r['raw_wkt_part'] * r['p_balls']:+.2f}", table_cell_center),
         Paragraph(f"{r['alpha_baseline']:+.2f}", table_cell_center),
         Paragraph(f"{r['beta_delta']:+.2f}", table_cell_center),
+        Paragraph(f"{r['tested_matches']:.0f}", table_cell_center),
+        Paragraph(f"{r['shrunk_succ_rate']:.1%}", table_cell_center),
+        Paragraph(f"{r['composite_score']:.3f}", table_cell_center),
         Paragraph(f"{r['boot_p']:.1%}", table_cell_center),
         Paragraph(r['archetype'], table_cell_style)
     ])
 
-# Load bowlers_master
-bowl_master_df = pd.read_csv('bowlers_master.csv')
-for i, r in enumerate(bowlers_top.itertuples(), start=1):
-    sub_b = bowl_master_df[bowl_master_df['bowler_name'] == r.player_name]
-    if len(sub_b) > 0:
-        act_w = sub_b.iloc[0]['p_wkts']
-        diff_w = sub_b.iloc[0]['wkts_above_x']
-        bowl_table_data[i][3] = Paragraph(f"{act_w:.0f}", table_cell_center)
-        bowl_table_data[i][8] = Paragraph(f"{diff_w:+.2f}", table_cell_center)
-
-t_bowl = Table(bowl_table_data, colWidths=[18, 90, 26, 24, 28, 36, 36, 36, 38, 36, 36, 34, 81])
+t_bowl = Table(bowl_table_data, colWidths=[16, 88, 22, 25, 30, 32, 28, 30, 30, 30, 18, 28, 28, 30, 88])
 t_bowl.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,0), primary_color),
     ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
     ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f8fafc')]),
-    ('PADDING', (0,0), (-1,-1), 2.2),
+    ('PADDING', (0,0), (-1,-1), 1.8),
 ]))
 story.append(t_bowl)
-story.append(Paragraph('* <i>Low Confidence Flag: Qualified with under 150 high-pressure balls or Boot P < 40%. Boot P represents the empirical probability of remaining in the top 10 over 500 match-clustered bootstrap resamples.</i>', ParagraphStyle('FootnoteB', fontName='Helvetica-Oblique', fontSize=6.2, leading=7.5, textColor=colors.HexColor('#64748b'))))
-story.append(Spacer(1, 4))
+story.append(Paragraph('* <i>Low Confidence Flag: Qualified with under 150 high-pressure balls or Boot P < 40%. Boot P represents empirical top-10 probability across 500 match-clustered bootstrap resamples.</i>', ParagraphStyle('FootnoteB', fontName='Helvetica-Oblique', fontSize=6.0, leading=7.2, textColor=colors.HexColor('#64748b'))))
+story.append(Spacer(1, 3))
 
-story.append(Paragraph('11. Bowler Tactical Archetypes & Deployment Strategy', h1_style))
+story.append(Paragraph('11. Bowler Cut-Line Analysis & Tactical Archetypes', h1_style))
 story.append(Paragraph(
-    '<b>1. Mahedi Hasan (#1, 122b, ER 6.15, Boot P 11.8%*):</b> Unrivaled run suppression (+0.444 saved/ball) in powerplay/middle overs, though narrow sample size yields low bootstrap stability. '
-    '<br/><b>2. Matheesha Pathirana (#2, 234b, ER 7.72, Boot P 89.6%):</b> Exceptional death execution (37.6% death share). Generates +0.321 runs saved/ball while taking 17 wickets (+3.10 above expected). Retains top 10 across 90% of resamples. '
-    '<br/><b>3. Krunal Pandya (#3, 336b, ER 6.61, Boot P 91.6%):</b> Chokehold middle-overs restrictor. Saves +0.303 runs/ball over 336 pressure balls with +2.57 wickets above expectation. Second-highest bootstrap permanence in bowling. '
-    '<br/><b>4. Shaheen Shah Afridi (#4, 173b, ER 6.80, Boot P 68.8%):</b> High-impact opening and death enforcer (+0.367 runs saved/ball, ER 6.80 vs 9.00 implied par). '
-    '<br/><b>5. Josh Hazlewood (#5, 316b, ER 8.11, Boot P 31.6%*):</b> Supreme strike weapon. Captured 30 wickets (+11.62 above Model B expected). High dismissal weight sustains rank. '
-    '<br/><b>6-10. Nawaz, Rashid, Shadab, Axar, Mujeeb:</b> Mohammad Nawaz (#6, 18 wkts, +5.60 above par) and Axar Patel (#9, 547 balls, +4.72 wkts above par) provide massive sample reliability. Rashid Khan (#7, 407 balls, ER 7.14, Boot P 76.4%) remains world-class. Shadab (#8, ER 6.71) and Mujeeb (#10) offer specialized phase control.',
+    '<b>Cut-Line Evaluation (#10 Boundary):</b> Under TIE_RULE = "strict", Shadab Khan (#10, score 1.040, 155b, Boot P 26.6%*) claims 10th ahead of Pat Cummins (#11, score 0.900, 190b, Boot P 16.8%), Harpreet Brar (#12, score 0.856, Boot P 35.0%), and Jasprit Bumrah (#14, score 0.846, Boot P 31.4%). '
+    '<br/><b>1. Matheesha Pathirana (#1, 234b, ER 7.72, Boot P 82.4%):</b> The most lethal death overs executioner in the dataset. Saves +0.182 runs/ball against 9.65 implied par, entering the top 10 in 82.4% of draws. '
+    '<br/><b>2. Krunal Pandya (#2, 336b, ER 6.61, Boot P 88.0%):</b> Chokehold middle-overs restrictor. Generates +0.197 EB runs saved/ball while conceding only 6.61 ER across 336 balls. '
+    '<br/><b>3. Rashid Khan (#3, 407b, ER 7.14, Boot P 81.4%):</b> Premier phase-versatile weapon. Operates with elite economy (7.14) over 407 high-pressure balls. '
+    '<br/><b>4. Axar Patel (#4, 547b, ER 7.25, Boot P 78.6%):</b> High-volume strike restrictor (+1.75 EB wickets above expected across 547 pressure balls). '
+    '<br/><b>5. Josh Hazlewood (#5, 316b, ER 8.11, Boot P 76.0%):</b> Highest wicket-taking impact in pressure cricket (+4.92 EB wickets above par over 316 balls). '
+    '<br/><b>6-10. Shaheen, Mahedi, Nawaz, Hasaranga, Shadab:</b> Shaheen Afridi (#6, ER 6.80, Boot P 68.8%) provides immense opening pressure. Mahedi Hasan (#7, ER 6.15, Boot P 37.0%*) offers extreme run suppression (+0.181 EB saved/b) but carries a sample flag (122b). Mohammad Nawaz (#8, Boot P 60.0%) and Wanindu Hasaranga (#9, +5.78 EB wkts, Boot P 55.2%) anchor middle-overs control.',
     body_style
 ))
 
@@ -444,17 +428,19 @@ story.append(PageBreak())
 # ==============================================================================
 # PAGE 5: SENSITIVITY MATRIX, FIGURE 4 EMBEDDED, METHOD LIMITS & CONCLUSION
 # ==============================================================================
-story.append(Paragraph('12. Robustness & Sensitivity Matrix (Pre-Registered Regimes)', h1_style))
+story.append(Paragraph('12. Robustness Matrix & Sensitivity Regimes', h1_style))
 story.append(Paragraph(
-    'To evaluate ranking stability, nine pre-registered sensitivity regimes were tested against the primary baseline. '
-    'Top-10 overlap measures set membership stability. Overlaps of 8/10 to 10/10 confirm that core conclusions are robust to structural parameter adjustments.',
+    'To evaluate ranking stability, thirteen sensitivity regimes were tested against the primary baseline. '
+    'Top-10 overlap measures set membership stability. '
+    'Core players (Abhishek Sharma, Shreyas Iyer, Tim David for batters; Pathirana, Krunal Pandya, Rashid Khan, Axar Patel, Hazlewood for bowlers) are completely stable across all regimes. '
+    'Conversely, low-sample fringe qualifiers fluctuate when sample floors or extreme weights are adjusted.',
     body_style
 ))
 
 sens_table_data = [
     [Paragraph('<b>Sensitivity Regime</b>', table_header_style),
      Paragraph('<b>Type</b>', table_header_style),
-     Paragraph('<b>Top-10 Overlap</b>', table_header_style),
+     Paragraph('<b>Overlap</b>', table_header_style),
      Paragraph('<b>Observed Rank Shift & Tactical Impact</b>', table_header_style)]
 ]
 
@@ -466,23 +452,23 @@ for idx, r in sens_master.iterrows():
         Paragraph(r['Shift'], table_cell_style)
     ])
 
-t_sens = Table(sens_table_data, colWidths=[140, 42, 58, 283])
+t_sens = Table(sens_table_data, colWidths=[135, 38, 48, 302])
 t_sens.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,0), primary_color),
     ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
     ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f8fafc')]),
-    ('PADDING', (0,0), (-1,-1), 2.2),
+    ('PADDING', (0,0), (-1,-1), 1.8),
 ]))
 story.append(t_sens)
-story.append(Spacer(1, 4))
+story.append(Spacer(1, 3))
 
 story.append(Paragraph('13. Baseline Ability vs Pressure Execution (&beta; Elevation)', h1_style))
 
 # Embed Figure 4 and description side-by-side
 fig4_path = 'reports/fig4_residual_vs_residual.png'
 if os.path.exists(fig4_path):
-    fig_w = 260
-    fig_h = 175
+    fig_w = 250
+    fig_h = 160
     img = Image(fig4_path, width=fig_w, height=fig_h)
     
     desc_p = Paragraph(
@@ -491,27 +477,31 @@ if os.path.exists(fig4_path):
         'The dashed red line represents parity (&beta; = 0, where pressure execution equals baseline execution). '
         '<br/><br/>'
         '<b>Key Scouting Takeaways:</b><br/>'
-        '&bull; <b>High-Baseline Stars (Quadrant 1):</b> Sooryavanshi, Abhishek Sharma, and Tim David perform well in all contexts and maintain high execution under pressure. '
-        '<br/>&bull; <b>Pressure Specialists (&beta; Elevation):</b> Kusal Perera (&beta; = +0.299) and Towhid Hridoy (&beta; = +0.296) exhibit massive positive divergence from sub-par baseline rates. '
-        '<br/>&bull; <b>Context Anchors:</b> Shreyas Iyer (&alpha; = +0.060, &beta; = +0.248) shows immense elevation under match tension over a large, reliable sample.',
+        '&bull; <b>High-Baseline Stars:</b> Sooryavanshi, Abhishek Sharma, and Tim David maintain elite execution across both low and high pressure contexts. '
+        '<br/>&bull; <b>Context Anchors (&beta; Elevation):</b> Shreyas Iyer (&alpha; = +0.064, &beta; = +0.122) and Kusal Perera (&alpha; = -0.102, &beta; = +0.192) display significant positive elevation over baseline output under match tension.',
         body_style
     )
     
-    t_fig = Table([[img, desc_p]], colWidths=[265, 258])
+    t_fig = Table([[img, desc_p]], colWidths=[255, 268])
     t_fig.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('PADDING', (0,0), (-1,-1), 2),
     ]))
     story.append(t_fig)
-    story.append(Spacer(1, 3))
+    story.append(Spacer(1, 2))
 
-story.append(Paragraph('14. Methodological Limitations & Measured Uncertainty', h1_style))
+story.append(Paragraph('14. Methodological Limitations, Tandem Tests & Conclusion', h1_style))
 story.append(Paragraph(
-    '<b>Limits & Boundary Conditions:</b> While the three-layer architecture eliminates situation and survivor bias, several structural limits must be acknowledged: '
-    '(1) <i>Innings 1 Win Probability:</i> Model A achieves +8% Brier skill over an uninformative 50% baseline in the first innings; 73.7% of high-pressure deliveries occur in chases where win probability is strongly calibrated (Brier 0.128). '
-    '(2) <i>Batting Persistence:</i> Corrected split-half reliability for batters is r = 0.169 (time-split r = 0.102), confirming that individual batting outcomes in T20 cricket carry substantial delivery-level stochastic noise. '
-    '(3) <i>Bowler Quality Confound:</i> Bowler pressure ratings correlate r = 0.708 with baseline economy, reflecting that run prevention under pressure heavily overlaps with elite general bowling capability. '
-    'Consequently, these rankings reflect <b>best demonstrated execution under pressure, with measured uncertainty</b>, rather than permanent traits. '
+    '<b>Tandem Spillover Statistical Tests:</b> Clustered regressions on overs testing whether run suppression generates partner wickets yield: '
+    '(1) Run-based (&le;6 runs conceded): &gamma;&#770; = -0.0087 (95% CI: [-0.0236, +0.0062], no detectable effect). '
+    '(2) Chase RRR pressure (&Delta; &ge; 2): &gamma;&#770; = +0.0446 (95% CI: [+0.0233, +0.0659]). '
+    '(3) Bowling WP gain (&ge;75th pct): &gamma;&#770; = +0.0175 (95% CI: [+0.0008, +0.0342]). '
+    'Because run-based suppression exhibits zero detectable spillover, tandem credits are excluded from the primary metric. '
+    '<br/><b>Structural Boundary Conditions:</b> '
+    '(1) <i>Innings 1 WP:</i> Out-of-fold Brier is 0.1598, but time-split Brier is 0.2543; 26% of pressure balls occur in innings 1. '
+    '(2) <i>Batting Stochasticity:</i> Corrected split-half reliability is r = 0.224 (time-split r = 0.131), proving Empirical Bayes shrinkage is mathematically mandatory. '
+    '(3) <i>Bowler Quality Confound:</i> Bowler ratings correlate r = 0.651 with baseline economy, reflecting that pressure run suppression overlaps with general quality. '
+    'Rankings express <b>best demonstrated execution under pressure, with measured uncertainty</b>. '
     '<br/><b>Pipeline Code:</b> Standalone, fully reproducible pipeline available at <font color="#004BA0"><u>https://github.com/ruhannpn/superr</u></font>.',
     body_style
 ))

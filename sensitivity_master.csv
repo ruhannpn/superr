@@ -1,14 +1,15 @@
 Regime,Type,Top10_Overlap,Shift
-W = 4 (Lower dismissal weight),Batter,9/10,"Hridoy #4->#6, Abhishek #5->#4"
-W = 8 (Higher dismissal weight),Batter,9/10,"Hridoy rises to #3, Tim David falls to #8"
-Dynamic W (Match situation dependent),Batter,10/10,9/10 stay in top 10; jacks marginal
-Opponent Quality (Batter & Bowler Elo),Both,9/10,Shaheen #4->#3; Sooryavanshi stays #1
-Aggregation Weight: w = n (Linear balls),Batter,7/10,"Daryl Mitchell enters, Russell exits"
-Chase-Only (Innings 2 Calibrated WP),Batter,7/10,"Shreyas Iyer #1, Karthik #4, David #5"
-IPL-Only (Franchise League Subset),Batter,4/10,"Sooryavanshi, Iyer, Abhishek, David dominate"
-Pressure Cutoff 85th Percentile (Extreme),Both,8/10,Top tier stable; small-sample fringe fluctuates
-Pressure Cutoff 75th Percentile (Broader),Both,9/10,Higher overlap; ratings smooth out
-High Sample Floor (>=150 balls),Batter,4/10,"Excludes 6 players (<150b): Vaibhav Sooryavanshi, Kusal Perera, Towhid Hridoy, Dinesh Karthik, Saim Ayub, Andre Russell"
-Pure Run Suppression (0% Wkt Weight),Bowler,7/10,"Hazlewood falls to #11; Mahedi, Shaheen, Krunal top 3"
-Tandem Rollover Enabled (Sensitivity),Bowler,10/10,Bumrah rises #15->#11; top 8 unchanged
-Beta Ranked (Pressure vs Usual Level Delta),Batter,5/10,Isolates players whose output surges under pressure
+k_wkt = 500 (Wkt Shrinkage Sensitivity),Batter,10/10,100% stable
+k_wkt = 5000 (Wkt Shrinkage Sensitivity),Batter,9/10,"Enters: ['Andre Russell'], Leaves: ['Suryakumar Yadav']"
+k_bwkt = 200 (Bowler Wkt Shrinkage),Bowler,10/10,100% stable
+k_bwkt = 1500 (Bowler Wkt Shrinkage),Bowler,10/10,100% stable
+Bowler Without Wicket Term (Wkts 0%),Bowler,7/10,"Enters: ['Saim Ayub', 'Sunil Narine', 'Jasprit Bumrah'], Leaves: ['Wanindu Hasaranga', 'Mohammad Nawaz', 'Josh Hazlewood']"
+W = 4 (Wicket Penalty Scale),Batter,9/10,"Enters: ['Andre Russell'], Leaves: ['Suryakumar Yadav']"
+W = 8 (Wicket Penalty Scale),Batter,10/10,100% stable
+Dynamic W (Context-Dependent Value),Batter,10/10,100% stable top 10
+Minimum 150 Balls Floor (Batters),Batter,6/10,"Leaves (<150b): ['Naman Dhir', 'Vaibhav Sooryavanshi', 'Jonny Bairstow', 'Kusal Perera']; Enters: ['Cameron Green', 'Ruturaj Gaikwad', 'Daryl Mitchell', 'Heinrich Klaasen']"
+Minimum 150 Balls Floor (Bowlers),Bowler,9/10,Leaves (<150b): ['Mahedi Hasan']; Enters: ['Patrick Cummins']
+Chase-Only (Innings 2 Calibrated WP),Batter,6/10,"Shreyas Iyer #1, David #2, Abhishek #3"
+IPL-Only (Franchise League Subset),Batter,7/10,"Sooryavanshi, Abhishek, Iyer, David dominate"
+Beta-Ranked (Elevation Over Baseline),Batter,3/10,"Enters: ['Devdutt Padikkal', 'Rohit Sharma', 'Matthew Short', 'Saim Ayub', 'Sam Curran', 'Kyle Mayers', 'William Jacks']; Leaves: ['Vaibhav Sooryavanshi', 'Josh Inglis', 'Shreyas Iyer', 'Suryakumar Yadav', 'Abhishek Sharma', 'Naman Dhir', 'Tim David']"
+Pure Run Suppression (0% Wkt Weight),Bowler,7/10,"Enters: ['Saim Ayub', 'Sunil Narine', 'Jasprit Bumrah']; Leaves: ['Wanindu Hasaranga', 'Mohammad Nawaz', 'Josh Hazlewood']"
